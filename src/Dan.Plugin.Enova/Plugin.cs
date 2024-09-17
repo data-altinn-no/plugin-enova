@@ -8,14 +8,14 @@ using Dan.Common.Exceptions;
 using Dan.Common.Interfaces;
 using Dan.Common.Models;
 using Dan.Common.Util;
-using Dan.Plugin.DATASOURCENAME.Models;
+using Dan.Plugin.Enova.Models;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 
-namespace Dan.Plugin.DATASOURCENAME;
+namespace Dan.Plugin.Enova;
 
 public class Plugin
 {

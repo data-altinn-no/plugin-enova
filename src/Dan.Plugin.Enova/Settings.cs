@@ -1,4 +1,4 @@
-namespace Dan.Plugin.DATASOURCENAME;
+namespace Dan.Plugin.Enova;
 
 public class Settings
 {
