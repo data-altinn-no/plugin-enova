@@ -5,6 +5,7 @@ using Dan.Common;
 using Dan.Common.Enums;
 using Dan.Common.Interfaces;
 using Dan.Common.Models;
+using Dan.Plugin.Enova.Config;
 using Dan.Plugin.Enova.Models;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
@@ -29,41 +30,14 @@ public class Metadata : IEvidenceSourceMetadata
         {
             new()
             {
-                EvidenceCodeName = global::Dan.Plugin.Enova.Plugin.SimpleDatasetName,
-                EvidenceSource = global::Dan.Plugin.Enova.Plugin.SourceName,
+                EvidenceCodeName = PluginConstants.PublicEnergyData,
+                EvidenceSource = PluginConstants.SourceName,
                 Values = new List<EvidenceValue>()
                 {
                     new()
                     {
-                        EvidenceValueName = "field1",
-                        ValueType = EvidenceValueType.String
-                    },
-                    new()
-                    {
-                        EvidenceValueName = "field2",
-                        ValueType = EvidenceValueType.String
-                    }
-                }
-            },
-            new()
-            {
-                EvidenceCodeName = global::Dan.Plugin.Enova.Plugin.RichDatasetName,
-                EvidenceSource = global::Dan.Plugin.Enova.Plugin.SourceName,
-                Values = new List<EvidenceValue>()
-                {
-                    new()
-                    {
-                        // Convention for rich datasets with a single JSON model is to use the value name "default"
                         EvidenceValueName = "default",
-                        ValueType = EvidenceValueType.JsonSchema,
-                        JsonSchemaDefintion =  generator.Generate(typeof(ExampleModel)).ToString()
-                    }
-                },
-                AuthorizationRequirements = new List<Requirement>
-                {
-                    new MaskinportenScopeRequirement
-                    {
-                        RequiredScopes = new List<string> { "altinn:dataaltinnno/somescope" }
+                        ValueType = EvidenceValueType.JsonSchema
                     }
                 }
             }
