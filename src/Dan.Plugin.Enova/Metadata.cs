@@ -9,7 +9,7 @@ using Dan.Plugin.Enova.Config;
 using Dan.Plugin.Enova.Models;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
-using Newtonsoft.Json.Schema.Generation;
+using NJsonSchema;
 
 namespace Dan.Plugin.Enova;
 
@@ -18,40 +18,6 @@ namespace Dan.Plugin.Enova;
 /// </summary>
 public class Metadata : IEvidenceSourceMetadata
 {
-    /// <summary>
-    ///
-    /// </summary>
-    /// <returns></returns>
-    public List<EvidenceCode> GetEvidenceCodes()
-    {
-        JSchemaGenerator generator = new JSchemaGenerator();
-
-        return new List<EvidenceCode>()
-        {
-            new()
-            {
-                EvidenceCodeName = PluginConstants.PublicEnergyData,
-                EvidenceSource = PluginConstants.SourceName,
-                Values = new List<EvidenceValue>()
-                {
-                    new()
-                    {
-                        EvidenceValueName = "default",
-                        ValueType = EvidenceValueType.JsonSchema
-                    }
-                }
-            }
-        };
-    }
-
-
-    /// <summary>
-    /// This function must be defined in all DAN plugins, and is used by core to enumerate the available datasets across all plugins.
-    /// Normally this should not be changed.
-    /// </summary>
-    /// <param name="req"></param>
-    /// <param name="context"></param>
-    /// <returns></returns>
     [Function(Constants.EvidenceSourceMetadataFunctionName)]
     public async Task<HttpResponseData> GetMetadataAsync(
         [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequestData req,
@@ -62,4 +28,27 @@ public class Metadata : IEvidenceSourceMetadata
         return response;
     }
 
+    public List<EvidenceCode> GetEvidenceCodes()
+    {
+        return
+        [
+            new EvidenceCode
+            {
+                EvidenceCodeName = PluginConstants.PublicEnergyData,
+                EvidenceSource = PluginConstants.SourceName,
+                ServiceContext = "eDueDiligence",
+                Values =
+                [
+                    new EvidenceValue
+                    {
+                        EvidenceValueName = "default",
+                        ValueType = EvidenceValueType.JsonSchema,
+                        JsonSchemaDefintion = JsonSchema
+                            .FromType<Dictionary<int, EmsResponseModel>>()
+                            .ToJson(Newtonsoft.Json.Formatting.Indented)
+                    }
+                ]
+            }
+        ];
+    }
 }

@@ -1,9 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
 using System.Threading.Tasks;
-using Dan.Common;
 using Dan.Common.Exceptions;
 using Dan.Common.Interfaces;
 using Dan.Common.Models;
@@ -15,42 +13,21 @@ using Dan.Plugin.Enova.Models;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 
 namespace Dan.Plugin.Enova;
 
-public class Plugin
+// ReSharper disable once ClassNeverInstantiated.Global
+public class Plugin(
+    IEntityRegistryService entityRegistryService,
+    ILoggerFactory loggerFactory,
+    IEvidenceSourceMetadata evidenceSourceMetadata,
+    IEnovaClient enovaClient,
+    IMapper<EmsCsv, EmsResponseModel> mapper)
 {
-    private readonly IEntityRegistryService _entityRegistryService;
-    private readonly IEvidenceSourceMetadata _evidenceSourceMetadata;
-    private readonly IEnovaClient _enovaClient;
-    private readonly IMapper<EmsCsv, EmsResponseModel> _mapper;
-    private readonly ILogger _logger;
-    private readonly HttpClient _client;
-    private readonly Settings _settings;
-
-    public Plugin(
-        IHttpClientFactory httpClientFactory,
-        IEntityRegistryService entityRegistryService,
-        ILoggerFactory loggerFactory,
-        IOptions<Settings> settings,
-        IEvidenceSourceMetadata evidenceSourceMetadata,
-        IEnovaClient enovaClient,
-        IMapper<EmsCsv, EmsResponseModel> mapper)
-    {
-        _client = httpClientFactory.CreateClient(Constants.SafeHttpClient);
-        _logger = loggerFactory.CreateLogger<Plugin>();
-        _settings = settings.Value;
-        _entityRegistryService = entityRegistryService;
-        _evidenceSourceMetadata = evidenceSourceMetadata;
-        _enovaClient = enovaClient;
-        _mapper = mapper;
-
-        _logger.LogDebug("Initialized plugin! This should be visible in the console");
-    }
+    private readonly ILogger _logger = loggerFactory.CreateLogger<Plugin>();
 
     [Function(PluginConstants.PublicEnergyData)]
-    public async Task<HttpResponseData> GetSimpleDatasetAsync(
+    public async Task<HttpResponseData> GetPublicEnergyData(
         [HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequestData req,
         FunctionContext context)
     {
@@ -85,9 +62,25 @@ public class Plugin
         foreach (var year in GetLastFiveYears())
         {
             // We don't care about what org to filter on, just want to fill the cache
-            await _enovaClient.GetEnergyPublicData(year, string.Empty);
+            await enovaClient.GetEnergyPublicData(year, string.Empty);
         }
     }
+
+    [Function("ForceRefreshEms")]
+    public async Task<HttpResponseData> ForceRefreshPublicEnergyData(
+        [HttpTrigger(AuthorizationLevel.Function, "post", Route = null)]
+        HttpRequestData req,
+        FunctionContext _)
+    {
+        foreach (var year in GetLastFiveYears())
+        {
+            // We don't care about what org to filter on, just want to fill the cache
+            await enovaClient.GetEnergyPublicData(year, string.Empty, forceRefresh: true);
+        }
+
+        return req.CreateResponse();
+    }
+
 
     private async Task<List<EvidenceValue>> GetEvidenceValuesPublicEmsData(
         EvidenceHarvesterRequest evidenceHarvesterRequest)
@@ -98,7 +91,7 @@ public class Plugin
                 "Request is missing organization number");
         }
 
-        var entity = await _entityRegistryService.GetFull(evidenceHarvesterRequest.OrganizationNumber);
+        var entity = await entityRegistryService.GetFull(evidenceHarvesterRequest.OrganizationNumber);
         if (entity is null)
         {
             throw new EvidenceSourcePermanentClientException(PluginConstants.ErrorNotFound,
@@ -109,15 +102,17 @@ public class Plugin
         foreach (var year in GetLastFiveYears())
         {
             // We don't care about what org to filter on, just want to fill the cache
-            var csv = await _enovaClient.GetEnergyPublicData(year, entity.Organisasjonsnummer);
-            var responseModels = csv.Select(_mapper.Map).ToList();
+            var csv = await enovaClient.GetEnergyPublicData(year, entity.Organisasjonsnummer);
+            var responseModels = csv.Select(mapper.Map).ToList();
             dict.Add(year, responseModels);
         }
 
         var response = dict
             .Where(kvp => kvp.Value.Count != 0)
-            .OrderByDescending(kvp => kvp.Key);
-        var ecb = new EvidenceBuilder(_evidenceSourceMetadata, PluginConstants.PublicEnergyData);
+            .OrderByDescending(kvp => kvp.Key)
+            .ToDictionary();
+
+        var ecb = new EvidenceBuilder(evidenceSourceMetadata, PluginConstants.PublicEnergyData);
         ecb.AddEvidenceValue("default", response, PluginConstants.SourceName);
 
         return ecb.GetEvidenceValues();

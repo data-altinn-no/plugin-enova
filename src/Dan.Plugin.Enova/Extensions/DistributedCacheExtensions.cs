@@ -22,7 +22,7 @@ public static class DistributedCacheExtensions
     {
         options ??= new DistributedCacheEntryOptions();
         var serializedValue = JsonConvert.SerializeObject(value);
-        var  encodedValue = Encoding.UTF8.GetBytes(serializedValue);
+        var encodedValue = Encoding.UTF8.GetBytes(serializedValue);
         await distributedCache.SetAsync(key, encodedValue, options);
     }
 }

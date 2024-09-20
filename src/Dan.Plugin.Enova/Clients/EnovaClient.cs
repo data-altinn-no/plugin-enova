@@ -22,7 +22,7 @@ namespace Dan.Plugin.Enova.Clients;
 
 public interface IEnovaClient
 {
-    Task<IEnumerable<EmsCsv>> GetEnergyPublicData(int year, string organizationNumber);
+    Task<IEnumerable<EmsCsv>> GetEnergyPublicData(int year, string organizationNumber, bool forceRefresh = false);
 }
 
 public class EnovaClient(
@@ -35,13 +35,18 @@ public class EnovaClient(
     private readonly Settings _settings = settings.Value;
     private readonly ILogger<EnovaClient> _logger = loggerFactory.CreateLogger<EnovaClient>();
 
-    public async Task<IEnumerable<EmsCsv>> GetEnergyPublicData(int year, string organizationNumber)
+    public async Task<IEnumerable<EmsCsv>> GetEnergyPublicData(int year, string organizationNumber, bool forceRefresh = false)
     {
-        var cacheKey = $"{PluginConstants.SourceName}-EmsCsv-{year.ToString()}";
-        var cachedValue = await distributedCache.GetValueAsync<IEnumerable<EmsCsv>>(cacheKey);
-        if (cachedValue != null)
+        var cacheKey = GetOrganizationEmsCsvCacheKey(year, organizationNumber);
+        var isCachedKey = GetYearCacheKey(year);
+
+        // An org might not have values stored for every year, so we want to avoid doing another lookup if
+        // we have already cached queried year
+        var isYearCached = await distributedCache.GetValueAsync<bool>(isCachedKey);
+        if (!forceRefresh && isYearCached)
         {
-            return cachedValue.Where(csv => csv.Organisasjonsnummer == organizationNumber).ToList();
+            var cachedValue = await distributedCache.GetValueAsync<IEnumerable<EmsCsv>>(cacheKey);
+            return cachedValue != null ? cachedValue.ToList() : [];
         }
 
         var baseAddress = _settings.EnovaUrl;
@@ -55,7 +60,7 @@ public class EnovaClient(
         var fileResponse = await _client.SendAsync(fileRequest);
 
         var records = await GetCsvRecordsFromHttpResponse(fileResponse);
-        await CacheValues(year, cacheKey, records);
+        await CachePerOrganization(year, records);
         return records.Where(csv => csv.Organisasjonsnummer == organizationNumber).ToList();
     }
 
@@ -126,6 +131,22 @@ public class EnovaClient(
         }
     }
 
+    public async Task CachePerOrganization(int year, List<EmsCsv> records)
+    {
+        // Set this first so that it gets invalidated first
+        var isCachedKey = GetYearCacheKey(year);
+        await CacheValues(year, isCachedKey, true);
+
+        var groupedByOrg = records.GroupBy(record => record.Organisasjonsnummer);
+        foreach (var organization in groupedByOrg)
+        {
+            var orgRecords = organization.ToList();
+            // Some org numbers are formated like "### ### ###", so need to remove that whitespace
+            var cacheKey = GetOrganizationEmsCsvCacheKey(year, organization.Key.TrimAllWhitespace());
+            await CacheValues(year, cacheKey, orgRecords);
+        }
+    }
+
     private async Task CacheValues<T>(int year, string cacheKey, T value)
     {
         var cacheExpiration = DateTime.UtcNow.Year == year ?
@@ -137,4 +158,8 @@ public class EnovaClient(
         };
         await distributedCache.SetValueAsync(cacheKey, value, options);
     }
+
+    private static string GetOrganizationEmsCsvCacheKey(int year, string organizationNumber)
+        => $"{PluginConstants.SourceName}-EmsCsv-{organizationNumber}-{year}";
+    private static string GetYearCacheKey(int year) => $"{PluginConstants.SourceName}-EmsCsv-{year}-IsCached";
 }
