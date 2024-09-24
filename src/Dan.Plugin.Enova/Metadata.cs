@@ -18,6 +18,9 @@ namespace Dan.Plugin.Enova;
 /// </summary>
 public class Metadata : IEvidenceSourceMetadata
 {
+    private const string EDueDiligence = "eDueDiligence";
+    private readonly List<string> _belongsToEDueDiligence = [EDueDiligence];
+
     [Function(Constants.EvidenceSourceMetadataFunctionName)]
     public async Task<HttpResponseData> GetMetadataAsync(
         [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequestData req,
@@ -36,7 +39,8 @@ public class Metadata : IEvidenceSourceMetadata
             {
                 EvidenceCodeName = PluginConstants.PublicEnergyData,
                 EvidenceSource = PluginConstants.SourceName,
-                ServiceContext = "eDueDiligence",
+                ServiceContext = EDueDiligence,
+                BelongsToServiceContexts = _belongsToEDueDiligence,
                 Values =
                 [
                     new EvidenceValue
