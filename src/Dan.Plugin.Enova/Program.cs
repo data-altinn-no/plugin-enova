@@ -1,3 +1,5 @@
+using Azure.Core;
+using Azure.Identity;
 using Microsoft.Extensions.Hosting;
 using Dan.Common.Extensions;
 using Dan.Plugin.Enova.Clients;
@@ -6,6 +8,7 @@ using Dan.Plugin.Enova.Mappers;
 using Dan.Plugin.Enova.Models;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using StackExchange.Redis;
 
 var host = new HostBuilder()
     .ConfigureDanPluginDefaults()
@@ -29,6 +32,32 @@ var host = new HostBuilder()
         {
             option.Configuration = applicationSettings.RedisConnectionString;
         });
+        // In case of still using access key (or local redis),
+        TokenCredential credential = new DefaultAzureCredential();
+        if (applicationSettings.RedisConnectionString.Contains("password=") ||
+            applicationSettings.RedisConnectionString.Contains("127.0.0.1"))
+        {
+            services.AddStackExchangeRedisCache(option =>
+            {
+                option.Configuration = applicationSettings.RedisConnectionString;
+            });
+        }
+        else
+        {
+            services.AddStackExchangeRedisCache(option =>
+            {
+                option.ConnectionMultiplexerFactory = async () =>
+                {
+                    var configurationOptions = await ConfigurationOptions
+                        .Parse(applicationSettings.RedisConnectionString)
+                        .ConfigureForAzureWithTokenCredentialAsync(credential);
+
+                    var connectionMultiplexer = await ConnectionMultiplexer.ConnectAsync(configurationOptions);
+
+                    return connectionMultiplexer;
+                };
+            });
+        }
     })
     .Build();
 
