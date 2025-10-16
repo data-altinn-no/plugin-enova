@@ -28,10 +28,6 @@ var host = new HostBuilder()
         services.Configure<Settings>(configurationRoot);
 
         var applicationSettings = services.BuildServiceProvider().GetRequiredService<IOptions<Settings>>().Value;
-        services.AddStackExchangeRedisCache(option =>
-        {
-            option.Configuration = applicationSettings.RedisConnectionString;
-        });
         // In case of still using access key (or local redis),
         TokenCredential credential = new DefaultAzureCredential();
         if (applicationSettings.RedisConnectionString.Contains("password=") ||
