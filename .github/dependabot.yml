@@ -14,4 +14,4 @@ updates:
     directory: "/" # Location of package manifests
     patterns: ["*"]
     schedule:
-    interval: "daily"
+      interval: "daily"
