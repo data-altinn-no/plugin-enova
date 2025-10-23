@@ -10,7 +10,7 @@ on:
 
 jobs:
  run:
-   uses: data-altinn-no/deploy-actions/.github/workflows/dan-deploy-flow.yml@e9158b8
+   uses: data-altinn-no/deploy-actions/.github/workflows/dan-deploy-flow.yml@d08132e
    with:
      artifact_name: 'dan-plugin-enova' # Can be omitted, defaults to 'artifact'
      function_project_path: 'src/Dan.Plugin.Enova'
