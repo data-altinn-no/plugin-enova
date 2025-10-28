@@ -10,7 +10,7 @@ on:
 
 jobs:
  run:
-   uses: data-altinn-no/deploy-actions/.github/workflows/dan-deploy-flow.yml@d08132e
+   uses: data-altinn-no/deploy-actions/.github/workflows/dan-deploy-flow.yml@d08132e852a68b9e10b759cb30e23366219790b0
    permissions:
     actions: read
     contents: read
