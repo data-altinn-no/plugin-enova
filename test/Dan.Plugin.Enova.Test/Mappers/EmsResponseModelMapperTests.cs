@@ -28,15 +28,11 @@ public class EmsResponseModelMapperTests
             Bygningskategori = "Bygningskategori",
             Byggear = 1995,
             Energikarakter = "Energikarakter",
-            Oppvarmingskarakter = "Oppvarmingskarakter",
             Utstedelsesdato = new DateTime(2024, 09, 20),
             TypeRegistrering = "TypeRegistrering",
             Attestnummer = "Attestnummer",
             BeregnetLevertEnergiTotaltkWhm2 = 12.34,
-            BeregnetFossilandel = "BeregnetFossilandel",
-            Materialvalg = "Materialvalg",
-            HarEnergiVurdering = true,
-            EnergiVurderingDato = new DateTime(2024, 08, 19)
+            Materialvalg = "Materialvalg"
         };
 
         var expected = new EmsResponseModel
@@ -56,15 +52,11 @@ public class EmsResponseModelMapperTests
             Bygningskategori = "Bygningskategori",
             Byggear = 1995,
             Energikarakter = "Energikarakter",
-            Oppvarmingskarakter = "Oppvarmingskarakter",
             Utstedelsesdato = new DateTime(2024, 09, 20),
             TypeRegistrering = "TypeRegistrering",
             Attestnummer = "Attestnummer",
             BeregnetLevertEnergiTotaltkWhm2 = 12.34,
-            BeregnetFossilandel = "BeregnetFossilandel",
-            Materialvalg = "Materialvalg",
-            HarEnergiVurdering = true,
-            EnergiVurderingDato = new DateTime(2024, 08, 19)
+            Materialvalg = "Materialvalg"
         };
 
         // Act

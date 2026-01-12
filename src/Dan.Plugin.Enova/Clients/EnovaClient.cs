@@ -50,7 +50,12 @@ public class EnovaClient(
         }
 
         var baseAddress = _settings.EnovaUrl;
-        var path = $"/ems/offentlige-data/v1/Fil/{year}";
+
+        // v1 api only supports up to year 2025, v2 doesnt support before 2026, so need this for some years
+        // as long as we want to fetch historical data
+        var path = year >= 2026 ?
+            $"/ems/offentlige-data/v2/Fil/{year}" :
+            $"/ems/offentlige-data/v1/Fil/{year}";
 
         var request = GetRequest($"{baseAddress}{path}");
         var response = await MakeRequest<EnovaFileResponse>(request);

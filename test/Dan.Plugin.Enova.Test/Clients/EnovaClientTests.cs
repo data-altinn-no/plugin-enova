@@ -8,10 +8,10 @@ using System.Threading.Tasks;
 using Dan.Plugin.Enova.Clients;
 using Dan.Plugin.Enova.Config;
 using Dan.Plugin.Enova.Models;
+using FakeItEasy;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Moq;
 using Newtonsoft.Json;
 using RichardSzalay.MockHttp;
 
@@ -20,7 +20,7 @@ namespace Dan.Plugin.Enova.Test.Clients;
 public class EnovaClientTests
 {
     private readonly MockHttpMessageHandler _mockHttpHandler;
-    private readonly Mock<IDistributedCache> _distributedCacheMock;
+    private readonly IDistributedCache _distributedCache;
     private readonly EnovaClient _enovaClient;
 
     private  const string BaseAddress = "https://mock.mock-enova.mock";
@@ -29,23 +29,24 @@ public class EnovaClientTests
     {
         _mockHttpHandler  = new MockHttpMessageHandler();
         var settings = new Settings{EnovaUrl = BaseAddress};
-        Mock<IHttpClientFactory> clientFactoryMock = new();
-        Mock<IOptions<Settings>> settingsOptions = new();
-        Mock<ILoggerFactory> loggerFactoryMock = new();
+        IHttpClientFactory clientFactory = A.Fake<IHttpClientFactory>();
+        IOptions<Settings> settingsOptions = A.Fake<IOptions<Settings>>();
+        ILoggerFactory loggerFactory = A.Fake<ILoggerFactory>();
 
-        _distributedCacheMock = new Mock<IDistributedCache>();
+        _distributedCache = A.Fake<IDistributedCache>();
 
-        clientFactoryMock
-            .Setup(x => x.CreateClient(It.IsAny<string>()))
+        A.CallTo(() =>
+             clientFactory
+            .CreateClient(A<string>.Ignored))
             .Returns(_mockHttpHandler.ToHttpClient());
 
-        settingsOptions.Setup(x => x.Value).Returns(settings);
+        A.CallTo(() => settingsOptions.Value).Returns(settings);
 
         _enovaClient = new EnovaClient(
-            clientFactoryMock.Object,
-            settingsOptions.Object,
-            loggerFactoryMock.Object,
-            _distributedCacheMock.Object);
+            clientFactory,
+            settingsOptions,
+            loggerFactory,
+            _distributedCache);
     }
 
     [Fact]
@@ -58,13 +59,13 @@ public class EnovaClientTests
         var isCachedKey = $"{PluginConstants.SourceName}-EmsCsv-{year}-IsCached";
         var cacheValueKey = $"{PluginConstants.SourceName}-EmsCsv-{organizationNumber}-{year}";
 
-        _distributedCacheMock
-            .Setup(m => m.GetAsync(isCachedKey, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(trueArray);
+        A.CallTo(() =>
+            _distributedCache.GetAsync(isCachedKey, A<CancellationToken>.Ignored))
+            .Returns(trueArray);
 
-        _distributedCacheMock
-            .Setup(m => m.GetAsync(cacheValueKey, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(null as byte[]);
+        A.CallTo(() =>
+            _distributedCache.GetAsync(cacheValueKey, A<CancellationToken>.Ignored))
+            .Returns(null as byte[]);
 
         // Act
         var actual = await _enovaClient.GetEnergyPublicData(year, organizationNumber);
@@ -82,16 +83,17 @@ public class EnovaClientTests
 
         var trueArray = "true"u8.ToArray();
         var isCachedKey = $"{PluginConstants.SourceName}-EmsCsv-{year}-IsCached";
-        _distributedCacheMock
-            .Setup(m => m.GetAsync(isCachedKey, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(trueArray);
+
+        A.CallTo(() =>
+            _distributedCache.GetAsync(isCachedKey, A<CancellationToken>.Ignored))
+            .Returns(trueArray);
 
         IEnumerable<EmsCsv> emsCsv = new List<EmsCsv> { new() { Organisasjonsnummer = organizationNumber } };
 
         var cacheValueKey = $"{PluginConstants.SourceName}-EmsCsv-{organizationNumber}-{year}";
-        _distributedCacheMock
-            .Setup(m => m.GetAsync(cacheValueKey, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(ToByteArray(emsCsv));
+        A.CallTo(() =>
+            _distributedCache.GetAsync(cacheValueKey, A<CancellationToken>.Ignored))
+            .Returns(ToByteArray(emsCsv));
 
         // Act
         var actual = await _enovaClient.GetEnergyPublicData(year, organizationNumber);
@@ -111,9 +113,9 @@ public class EnovaClientTests
 
         var falseArray = "false"u8.ToArray();
         var isCachedKey = $"{PluginConstants.SourceName}-EmsCsv-{year}-IsCached";
-        _distributedCacheMock
-            .Setup(m => m.GetAsync(isCachedKey, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(falseArray);
+        A.CallTo(() =>
+            _distributedCache.GetAsync(isCachedKey, A<CancellationToken>.Ignored))
+            .Returns(falseArray);
 
         const string csv = "Knr,Gnr,Bnr,Snr,Fnr,Andelsnummer,Bygningsnummer,GateAdresse,Postnummer,Poststed,BruksEnhetsNummer,Organisasjonsnummer,Bygningskategori,Byggear,Energikarakter,Oppvarmingskarakter,Utstedelsesdato,TypeRegistrering,Attestnummer,BeregnetLevertEnergiTotaltkWhm2,BeregnetFossilandel,Materialvalg,HarEnergiVurdering,EnergiVurderingDato\n" +
                            "1234,11,22,33,44,,11223344,Mockvei 123,1234,MOCK,H0101,org,Småhus,1976,E,Yellow,2023-12-31T23:45:20.0000000,Simple,randomguidgoeshere,224.93,\"0,61\",Tre,False,";
@@ -142,15 +144,11 @@ public class EnovaClientTests
             Bygningskategori = "Småhus",
             Byggear = 1976,
             Energikarakter = "E",
-            Oppvarmingskarakter = "Yellow",
             Utstedelsesdato = DateTime.Parse("2023-12-31T23:45:20.0000000"),
             TypeRegistrering = "Simple",
             Attestnummer = "randomguidgoeshere",
             BeregnetLevertEnergiTotaltkWhm2 = 224.93,
-            BeregnetFossilandel = "0,61",
-            Materialvalg = "Tre",
-            HarEnergiVurdering = false,
-            EnergiVurderingDato = null
+            Materialvalg = "Tre"
         };
 
         // Act
@@ -188,20 +186,17 @@ public class EnovaClientTests
         await _enovaClient.CachePerOrganization(year, records);
 
         // Assert
-        _distributedCacheMock
-            .Verify(c =>
-                c.SetAsync("Enova-EmsCsv-2023-IsCached", It.IsAny<byte[]>(), It.IsAny<DistributedCacheEntryOptions>(), It.IsAny<CancellationToken>()),
-                Times.Once);
+        A.CallTo(() =>
+            _distributedCache.SetAsync("Enova-EmsCsv-2023-IsCached", A<byte[]>.Ignored, A<DistributedCacheEntryOptions>.Ignored, A<CancellationToken>.Ignored))
+            .MustHaveHappenedOnceExactly();
 
-        _distributedCacheMock
-            .Verify(c =>
-                    c.SetAsync("Enova-EmsCsv-1-2023", It.IsAny<byte[]>(), It.IsAny<DistributedCacheEntryOptions>(), It.IsAny<CancellationToken>()),
-                Times.Once);
+        A.CallTo(() =>
+            _distributedCache.SetAsync("Enova-EmsCsv-1-2023", A<byte[]>.Ignored, A<DistributedCacheEntryOptions>.Ignored, A<CancellationToken>.Ignored))
+            .MustHaveHappenedOnceExactly();
 
-        _distributedCacheMock
-            .Verify(c =>
-                    c.SetAsync("Enova-EmsCsv-2-2023", It.IsAny<byte[]>(), It.IsAny<DistributedCacheEntryOptions>(), It.IsAny<CancellationToken>()),
-                Times.Once);
+        A.CallTo(() =>
+            _distributedCache.SetAsync("Enova-EmsCsv-2-2023", A<byte[]>.Ignored, A<DistributedCacheEntryOptions>.Ignored, A<CancellationToken>.Ignored))
+            .MustHaveHappenedOnceExactly();
     }
 
     private static byte[] ToByteArray<T>(T value)

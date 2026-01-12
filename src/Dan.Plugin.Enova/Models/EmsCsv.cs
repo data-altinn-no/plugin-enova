@@ -51,9 +51,6 @@ public class EmsCsv
     [Name("Energikarakter")]
     public string Energikarakter { get; set; }
 
-    [Name("Oppvarmingskarakter")]
-    public string Oppvarmingskarakter { get; set; }
-
     [Name("Utstedelsesdato")]
     public DateTime? Utstedelsesdato { get; set; }
 
@@ -66,15 +63,6 @@ public class EmsCsv
     [Name("BeregnetLevertEnergiTotaltkWhm2")]
     public double BeregnetLevertEnergiTotaltkWhm2 { get; set; }
 
-    [Name("BeregnetFossilandel")]
-    public string BeregnetFossilandel { get; set; }
-
     [Name("Materialvalg")]
     public string Materialvalg { get; set; }
-
-    [Name("HarEnergiVurdering")]
-    public bool HarEnergiVurdering { get; set; }
-
-    [Name("EnergiVurderingDato")]
-    public DateTime? EnergiVurderingDato { get; set; }
 }
