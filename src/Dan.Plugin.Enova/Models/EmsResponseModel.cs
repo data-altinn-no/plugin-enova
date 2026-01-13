@@ -51,9 +51,6 @@ public class EmsResponseModel
     [JsonProperty("energikarakter")]
     public string Energikarakter { get; set; }
 
-    [JsonProperty("oppvarmingskarakter")]
-    public string Oppvarmingskarakter { get; set; }
-
     [JsonProperty("utstedelsesdato")]
     public DateTime? Utstedelsesdato { get; set; }
 
@@ -66,15 +63,6 @@ public class EmsResponseModel
     [JsonProperty("beregnetLevertEnergiTotaltkWhm2")]
     public double BeregnetLevertEnergiTotaltkWhm2 { get; set; }
 
-    [JsonProperty("beregnetFossilandel")]
-    public string BeregnetFossilandel { get; set; }
-
     [JsonProperty("materialvalg")]
     public string Materialvalg { get; set; }
-
-    [JsonProperty("harEnergiVurdering")]
-    public bool HarEnergiVurdering { get; set; }
-
-    [JsonProperty("energiVurderingDato")]
-    public DateTime? EnergiVurderingDato { get; set; }
 }

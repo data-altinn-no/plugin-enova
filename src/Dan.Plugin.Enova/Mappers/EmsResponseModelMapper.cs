@@ -23,15 +23,11 @@ public class EmsResponseModelMapper : IMapper<EmsCsv, EmsResponseModel>
             Bygningskategori = input.Bygningskategori,
             Byggear = input.Byggear,
             Energikarakter = input.Energikarakter,
-            Oppvarmingskarakter = input.Oppvarmingskarakter,
             Utstedelsesdato = input.Utstedelsesdato,
             TypeRegistrering = input.TypeRegistrering,
             Attestnummer = input.Attestnummer,
             BeregnetLevertEnergiTotaltkWhm2 = input.BeregnetLevertEnergiTotaltkWhm2,
-            BeregnetFossilandel = input.BeregnetFossilandel,
-            Materialvalg = input.Materialvalg,
-            HarEnergiVurdering = input.HarEnergiVurdering,
-            EnergiVurderingDato = input.EnergiVurderingDato
+            Materialvalg = input.Materialvalg
         };
     }
 }

@@ -4,26 +4,25 @@ using System.Threading;
 using System.Threading.Tasks;
 using Dan.Plugin.Enova.Extensions;
 using Dan.Plugin.Enova.Models;
+using FakeItEasy;
 using Microsoft.Extensions.Caching.Distributed;
-using Moq;
 using Newtonsoft.Json;
 
 namespace Dan.Plugin.Enova.Test.Extensions;
 
 public class DistributedCacheExtensionsTests
 {
-    private readonly Mock<IDistributedCache> _distributedCache = new();
+    private readonly IDistributedCache _distributedCache = A.Fake<IDistributedCache>();
 
     [Fact]
     public async Task GetValueAsync_Bool_ValueIsNull_ShouldBeFalse()
     {
         // Arrange
-        _distributedCache
-            .Setup(cache => cache.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(null as byte[]);
+        A.CallTo(() => _distributedCache.GetAsync(A<string>.Ignored, A<CancellationToken>.Ignored))
+         .Returns(null as byte[]);
 
         // Act
-        var actual = await _distributedCache.Object.GetValueAsync<bool>("dummy");
+        var actual = await _distributedCache.GetValueAsync<bool>("dummy");
 
         // Assert
         actual.Should().Be(false);
@@ -34,12 +33,11 @@ public class DistributedCacheExtensionsTests
     {
         // Arrange
         var trueByteArray = "true"u8.ToArray();
-        _distributedCache
-            .Setup(cache => cache.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(trueByteArray);
+        A.CallTo(() => _distributedCache.GetAsync(A<string>.Ignored, A<CancellationToken>.Ignored))
+         .Returns(trueByteArray);
 
         // Act
-        var actual = await _distributedCache.Object.GetValueAsync<bool>("dummy");
+        var actual = await _distributedCache.GetValueAsync<bool>("dummy");
 
         // Assert
         actual.Should().Be(true);
@@ -49,12 +47,11 @@ public class DistributedCacheExtensionsTests
     public async Task GetValueAsync_EmsCsvList_ValueIsNull_ShouldBeNull()
     {
         // Arrange
-        _distributedCache
-            .Setup(cache => cache.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(null as byte[]);
+        A.CallTo(() => _distributedCache.GetAsync(A<string>.Ignored, A<CancellationToken>.Ignored))
+         .Returns(null as byte[]);
 
         // Act
-        var actual = await _distributedCache.Object.GetValueAsync<List<EmsCsv>>("dummy");
+        var actual = await _distributedCache.GetValueAsync<List<EmsCsv>>("dummy");
 
         // Assert
         actual.Should().BeNull();
@@ -64,15 +61,14 @@ public class DistributedCacheExtensionsTests
     public async Task GetValueAsync_EmsCsvList_ValueFound_ShouldBeList()
     {
         // Arrange
-        List<EmsCsv>  emscsvlist = [new EmsCsv { Organisasjonsnummer = "123" }];
+        List<EmsCsv>  emscsvlist = [new() { Organisasjonsnummer = "123" }];
         var serializedValue = JsonConvert.SerializeObject(emscsvlist);
         var emscsvlistBytes = Encoding.UTF8.GetBytes(serializedValue);
-        _distributedCache
-            .Setup(cache => cache.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(emscsvlistBytes);
+        A.CallTo(() => _distributedCache.GetAsync(A<string>.Ignored, A<CancellationToken>.Ignored))
+         .Returns(emscsvlistBytes);
 
         // Act
-        var actual = await _distributedCache.Object.GetValueAsync<List<EmsCsv>>("dummy");
+        var actual = await _distributedCache.GetValueAsync<List<EmsCsv>>("dummy");
 
         // Assert
         actual.Should().BeEquivalentTo(emscsvlist);
