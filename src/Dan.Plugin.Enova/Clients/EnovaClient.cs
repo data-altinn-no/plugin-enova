@@ -39,7 +39,7 @@ public class EnovaClient(
     {
         var cacheKey = GetOrganizationEmsCsvCacheKey(year, organizationNumber);
         var isCachedKey = GetYearCacheKey(year);
-        var secretTest = "thisIsMySecret";
+        
         // An org might not have values stored for every year, so we want to avoid doing another lookup if
         // we have already cached queried year
         var isYearCached = await distributedCache.GetValueAsync<bool>(isCachedKey);
