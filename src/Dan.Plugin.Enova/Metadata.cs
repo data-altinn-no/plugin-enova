@@ -9,7 +9,6 @@ using Dan.Plugin.Enova.Config;
 using Dan.Plugin.Enova.Models;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
-using NJsonSchema;
 
 namespace Dan.Plugin.Enova;
 
@@ -47,9 +46,8 @@ public class Metadata : IEvidenceSourceMetadata
                     {
                         EvidenceValueName = "default",
                         ValueType = EvidenceValueType.JsonSchema,
-                        JsonSchemaDefintion = JsonSchema
-                            .FromType<Dictionary<int, EmsResponseModel>>()
-                            .ToJson(Newtonsoft.Json.Formatting.Indented)
+                        JsonSchemaDefintion = EvidenceValue
+                            .SchemaFromObject<Dictionary<int, EmsResponseModel>>(Newtonsoft.Json.Formatting.Indented)
                     }
                 ]
             }
