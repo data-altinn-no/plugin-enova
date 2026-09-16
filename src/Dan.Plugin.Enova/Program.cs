@@ -38,8 +38,8 @@ var host = new HostBuilder()
         {
             services.AddOpenTelemetry()
                 .WithTracing(tracing => tracing.AddHttpClientInstrumentation())
-                .UseAzureMonitorExporter(options => options.ConnectionString = appInsightsConnectionString);
-            services.AddOpenTelemetry().UseFunctionsWorkerDefaults();
+                .UseAzureMonitorExporter(options => options.ConnectionString = appInsightsConnectionString)
+                .UseFunctionsWorkerDefaults();
         }
 
         // Add any additional services here

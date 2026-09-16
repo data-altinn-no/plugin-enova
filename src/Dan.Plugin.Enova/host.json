@@ -1,20 +1,21 @@
 {
-	"version": "2.0",
-	"extensions": {
-		"http": {
-			"dynamicThrottlesEnabled": false
-		}
-	},
+    "version": "2.0",
+    "extensions": {
+        "http": {
+            "dynamicThrottlesEnabled": false
+        }
+    },
+    "telemetryMode": "OpenTelemetry",
     "logging": {
-        "applicationInsights": {
+        "OpenTelemetry": {
+            "logLevel": {
+                "default": "Information",
+                "Microsoft": "Warning"
+            },
             "samplingSettings": {
                 "isEnabled": false
             }
-        },
-        "logLevel": {
-            "default": "Information",
-            "Microsoft": "Warning"
         }
-    },
-    "telemetryMode": "OpenTelemetry"
+    }
+
 }
